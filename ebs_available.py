@@ -20,19 +20,19 @@ def show_credentials(): # Printing credentials into
 
 def show_instances():
    print('')
-   print('Showing running instances')
+   print('Showing stopped instances')
    print('')
-   instances = ec2.instances.all()
+   instances = ec2.instances.filter(Filters=[{'Name':'instance-state-name','Values':['stopped','terminated']}])
    for instance in instances:
-   print('')
+      print('')
       for tag in instance.tags:
          if tag['Key'] == 'Name':
             print('Name tag : '+tag['Value'])
       print('ID : '+instance.id)
       print('type : '+instance.instance_type)
-      if not instance.public_dns_name:
+      if instance.public_dns_name:
          print('Public DNA : '+instance.public_dns_name)
-      print('State : '+instance.state['Name'])
+      #print('State : '+instance.state['Name'])
       print('------------------------')
    
 def show_buckets():
@@ -41,16 +41,21 @@ def show_buckets():
    print('_____________________')
    print('')
    for bucket in s3.buckets.all():
-       print(bucket.name)
+      print(bucket.name)
 
-def show_ip()
+def show_ip():
    print('')
    print('Showing Elastic IPs')
    print('')
-   
+   client = boto3.client('ec2')
+   adresses = client.describe_addresses()
+   for address in adresses['Addresses']:
+      if 'NetworkInterfaceId' not in address:
+         print(address['PublicIp'])
    
 if __name__ == '__main__':
-   show_credentials()
+   #show_credentials()
    show_instances()
-   show_buckets(
+   show_buckets()
    show_ip()
+
