@@ -1,18 +1,20 @@
 import boto3
 import sys
 import os
-#import datetime # Used for token time comparition
-import sys, getopt
+import datetime
+import sys
+import getopt
+import argparse
+import csv
 
 #regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
 
-#def main():
-#   parser = argparse.ArgumentParser(description='AWS scraper')
-#   parser.add_argument('Resource', metavar='X', type=int, nargs='+',help='an integer for the accumulator')
-#   parser.add_argument('--sum', dest='accumulate', action='store_const',const=sum, default=max,help='sum the integers (default: find the max)')
-#
-#   args = parser.parse_args()
-#   print args.accumulate(args.integers)
+parser = argparse.ArgumentParser()
+parser.add_argument("--region", default='us-east-1', metavar='<us-east-1>,<eu-west-1>,<...>', nargs='?', help='AWS Region')
+parser.add_argument("--output", default='table', metavar='<table|csv|all>', nargs='?', help='Output format')
+parser.add_argument("--label", default='default', metavar='<name>', nargs='?', help='Scrape Label')
+parser.add_argument("--service", default='all', metavar='<ebs|ec|ec2|rds|s3|all>', nargs='?', help='Service(s) to scrape')
+args   = parser.parse_args()
 
 def menu():
    print('Menu')
@@ -106,5 +108,7 @@ def show_elb():
       #  for instance in running_instances:
       #      print('Instance : '+instance.public_dns_name);
 
-if __name__ == '__main__':
-   menu()
+if not len(sys.argv) > 1
+
+#if __name__ == '__main__':
+#   menu()
