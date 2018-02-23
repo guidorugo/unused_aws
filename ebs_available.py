@@ -52,7 +52,8 @@ def show_ip():
    for address in adresses['Addresses']:
       if 'NetworkInterfaceId' not in address:
          print(address['PublicIp'])
-   
+
+
 if __name__ == '__main__':
    #show_credentials()
    show_instances()
