@@ -10,10 +10,11 @@ import argparse
 import csv
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--service", default='all', metavar='<ebs|ec|ec2|rds|s3|all>', nargs='?', help='Service(s) to scrape')
 parser.add_argument("--region", default='all', metavar='<us-east-1>,<eu-west-1>,<...>', nargs='?', help='AWS Region')
 parser.add_argument("--output", default='all', metavar='<table|csv|all>', nargs='?', help='Output format')
-parser.add_argument("--service", default='all', metavar='<ebs|ec|ec2|rds|s3|all>', nargs='?', help='Service(s) to scrape')
-args   = parser.parse_args()
+args = parser.parse_args()
+print('')
 
 def main():
   if len(sys.argv) == 1:  
@@ -22,7 +23,6 @@ def main():
       print('API')
 
 def menu():
-   print('Menu')
    menu = {'1':'[1] Show credentials','2':'[2] Show everything','3':'[3] Show instances stopped','4':'[4] Show buckets','5':'[5] Show unused IPs','6':'[6] Show Elastic LoadBalancer unused'}
    while True: 
      for key, value in (sorted(menu.iteritems())): 
@@ -111,16 +111,18 @@ def show_elb():
    print('Showing elb')
    print('')
    elb = boto3.client('elb')
+   ec2r = boto3.client('ec2')
    lb = elb.describe_load_balancers()
-   for elbs in lb['LoadBalancerDescriptions']:
-      if len(elbs['Instances']) == 0:
-         print (elbs['LoadBalancerName'])
+   regions = [region['RegionName'] for region in ec2r.describe_regions()['Regions']]
+   for region in regions:
+      for elbs in lb['LoadBalancerDescriptions']:
+         if len(elbs['Instances']) == 0:
+            print (values(elbs['LoadBalancerName']),' in ',region)
       #for instances in elbs['Instances']:
       #  running_instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
       #  for instance in running_instances:
       #      print('Instance : '+instance.public_dns_name);
 
-#if not len(sys.argv) > 1
-
 if __name__ == '__main__':
+   print('Menu\n')
    main() 
