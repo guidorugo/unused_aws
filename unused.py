@@ -18,7 +18,7 @@ args   = parser.parse_args()
 def main():
   if len(sys.argv) == 1:  
       menu()
-   else:
+  else:
       print('API')
 
 def menu():
