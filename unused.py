@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import boto3
 import sys
 import os
@@ -7,14 +9,17 @@ import getopt
 import argparse
 import csv
 
-#regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
-
 parser = argparse.ArgumentParser()
-parser.add_argument("--region", default='us-east-1', metavar='<us-east-1>,<eu-west-1>,<...>', nargs='?', help='AWS Region')
-parser.add_argument("--output", default='table', metavar='<table|csv|all>', nargs='?', help='Output format')
-parser.add_argument("--label", default='default', metavar='<name>', nargs='?', help='Scrape Label')
+parser.add_argument("--region", default='all', metavar='<us-east-1>,<eu-west-1>,<...>', nargs='?', help='AWS Region')
+parser.add_argument("--output", default='all', metavar='<table|csv|all>', nargs='?', help='Output format')
 parser.add_argument("--service", default='all', metavar='<ebs|ec|ec2|rds|s3|all>', nargs='?', help='Service(s) to scrape')
 args   = parser.parse_args()
+
+def main():
+  if len(sys.argv) == 1:  
+      menu()
+   else:
+      print('API')
 
 def menu():
    print('Menu')
@@ -50,27 +55,34 @@ def show_credentials(): # Printing credentials into
    print('AWS session token '+os.environ['AWS_SESSION_TOKEN'])
    print('AWS default region '+os.environ['AWS_DEFAULT_REGION'])
    print('AWS profile name '+os.environ['AWS_PROFILE'])
-   print('Token created at '+os.environ['AWS_TIMESTAMP'])
+   try:
+      print('Token created at '+os.environ['AWS_TIMESTAMP'])
+   except KeyError:
+      pass
    print('')
 
 def show_instances():
    print('')
    print('Showing stopped instances')
    print('')
-   ec2 = boto3.client('ec2')
-   instances = ec2.describe_instances(Filters=[{'Name':'instance-state-name','Values':['stopped','terminated']}])
-   for instance in instances:
-      print('')
-      for tag in instance['Reservations']:
-         if tag-key == 'Name':
-            print('Name tag : '+tag['Value'])
-      print('ID : '+instance.id)
-      print('type : '+instance.instance_type)
-      if instance.public_dns_name:
-         print('Public DNA : '+instance.public_dns_name)
-      print('------------------------')
+   ec2r = boto3.client('ec2')
+   regions = [region['RegionName'] for region in ec2r.describe_regions()['Regions']]
+   for region in regions: 
+      conection = boto3.resource('ec2', region_name=region)
+      instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['stopped','terminated']}])
+      for instance in instances:
+         print('')
+         for tag in instance.tags:
+            if tag['Key'] == 'Name':
+               print('Name tag : '+tag['Value'])
+         print('ID : '+instance.id)
+         print('type : '+instance.instance_type)
+         if instance.public_dns_name:
+            print('Public DNA : '+instance.public_dns_name)
+         print("Region : ",instance.placement['AvailabilityZone'])
+         print('------------------------------')
    print('')
-   
+ 
 def show_buckets():
    print('')
    print('Showing buckets');
@@ -108,7 +120,7 @@ def show_elb():
       #  for instance in running_instances:
       #      print('Instance : '+instance.public_dns_name);
 
-if not len(sys.argv) > 1
+#if not len(sys.argv) > 1
 
-#if __name__ == '__main__':
-#   menu()
+if __name__ == '__main__':
+   main() 
