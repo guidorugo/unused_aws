@@ -8,6 +8,7 @@ import sys
 import getopt
 import argparse
 import csv
+from botocore.exceptions import ClientError
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--service", default='all', metavar='<ebs|ec|ec2|rds|s3|all>', nargs='?', help='Service(s) to scrape')
@@ -98,13 +99,16 @@ def show_ip():
    print('')
    count = 0
    client = boto3.client('ec2')
-   adresses = client.describe_addresses()
-   for address in adresses['Addresses']:
-      if 'NetworkInterfaceId' not in address:
-         print(address['PublicIp'])
-         count += 1
-   if count == '0':
-      print('No Elastic IPs unused found.')
+   regions = [region['RegionName'] for region in client.describe_regions()['Regions']]
+   for region in regions:
+      adresses = client.describe_addresses()
+      client = boto3.client('ec2', region_name=region)
+      for address in adresses['Addresses']:
+         if 'NetworkInterfaceId' not in address:
+            print(address['PublicIp'])
+            count += 1
+      if count == '0':
+         print('No Elastic IPs unused found.')
 
 def show_elb():
    print('')
@@ -115,14 +119,15 @@ def show_elb():
    lb = elb.describe_load_balancers()
    regions = [region['RegionName'] for region in ec2r.describe_regions()['Regions']]
    for region in regions:
+      ec2r = boto3.client('ec2', region_name=region)
       for elbs in lb['LoadBalancerDescriptions']:
          if len(elbs['Instances']) == 0:
             print (values(elbs['LoadBalancerName']),' in ',region)
-      #for instances in elbs['Instances']:
-      #  running_instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
-      #  for instance in running_instances:
-      #      print('Instance : '+instance.public_dns_name);
 
 if __name__ == '__main__':
    print('Menu\n')
-   main() 
+   try:
+      main()
+   except ClientError:
+      print('Token expired, exiting...')
+      sys.exit(1)
