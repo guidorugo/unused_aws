@@ -51,13 +51,13 @@ def menu():
 
 def show_credentials(): # Printing credentials into
    print('\nCredentials to be used :')
-   print('AWS access key '+os.environ['AWS_ACCESS_KEY_ID'])
-   print('AWS secret key '+os.environ['AWS_SECRET_ACCESS_KEY'])
-   print('AWS session token '+os.environ['AWS_SESSION_TOKEN'])
-   print('AWS default region '+os.environ['AWS_DEFAULT_REGION'])
-   print('AWS profile name '+os.environ['AWS_PROFILE'])
+   print('AWS access key ',os.environ['AWS_ACCESS_KEY_ID'])
+   print('AWS secret key ',os.environ['AWS_SECRET_ACCESS_KEY'])
+   print('AWS session token ',os.environ['AWS_SESSION_TOKEN'])
+   print('AWS default region ',os.environ['AWS_DEFAULT_REGION'])
+   print('AWS profile name ',os.environ['AWS_PROFILE'])
    try:
-      print('Token created at '+os.environ['AWS_TIMESTAMP'])
+      print('Token created at ',os.environ['AWS_TIMESTAMP'])
    except KeyError:
       pass
    print('')
@@ -65,9 +65,8 @@ def show_credentials(): # Printing credentials into
 def show_instances():
    print('')
    print('Showing stopped instances')
-   print('')
-   ec2r = boto3.client('ec2')
-   regions = [region['RegionName'] for region in ec2r.describe_regions()['Regions']]
+   ec2 = boto3.client('ec2')
+   regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
    for region in regions: 
       conection = boto3.resource('ec2', region_name=region)
       instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['stopped','terminated']}])
@@ -75,12 +74,12 @@ def show_instances():
          print('')
          for tag in instance.tags:
             if tag['Key'] == 'Name':
-               print('Name tag : '+tag['Value'])
-         print('ID : '+instance.id)
-         print('type : '+instance.instance_type)
+               print('Name tag : ',tag['Value'])
+         print('ID : ',instance.id)
+         print('type : ',instance.instance_type)
          if instance.public_dns_name:
             print('Public DNA : '+instance.public_dns_name)
-         print("Region : ",instance.placement['AvailabilityZone'])
+         print("Region : ",region)
          print('------------------------------')
    print('')
  
@@ -101,14 +100,17 @@ def show_ip():
    client = boto3.client('ec2')
    regions = [region['RegionName'] for region in client.describe_regions()['Regions']]
    for region in regions:
-      adresses = client.describe_addresses()
       client = boto3.client('ec2', region_name=region)
-      for address in adresses['Addresses']:
+      adresses = client.describe_addresses()['Addresses']
+      for address in adresses:
          if 'NetworkInterfaceId' not in address:
-            print(address['PublicIp'])
+            print(address['PublicIp']," in ",region)
             count += 1
       if count == '0':
          print('No Elastic IPs unused found.')
+   print('')
+
+
 
 def show_elb():
    print('')
@@ -122,7 +124,7 @@ def show_elb():
       ec2r = boto3.client('ec2', region_name=region)
       for elbs in lb['LoadBalancerDescriptions']:
          if len(elbs['Instances']) == 0:
-            print (values(elbs['LoadBalancerName']),' in ',region)
+            print(elbs['LoadBalancerName'],' in ',region['RegionName'])
 
 if __name__ == '__main__':
    print('Menu\n')
@@ -131,3 +133,6 @@ if __name__ == '__main__':
    except ClientError:
       print('Token expired, exiting...')
       sys.exit(1)
+   except KeyboardInterrupt:
+      print('Ok, ok, quitting...')
+      sys.exit(0)
