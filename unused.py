@@ -10,6 +10,10 @@ import argparse
 import csv
 from botocore.exceptions import ClientError
 
+# ToDo
+#  - Multithreading / Multiprocessing
+#  - STS
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--service", default='all', metavar='<ebs|ec|ec2|rds|s3|all>', nargs='?', help='Service(s) to scrape')
 parser.add_argument("--region", default='all', metavar='<us-east-1>,<eu-west-1>,<...>', nargs='?', help='AWS Region')
@@ -50,12 +54,16 @@ def menu():
        sys.exit(0) 
 
 def show_credentials(): # Printing credentials into
-   print('\nCredentials to be used :')
-   print('AWS access key ',os.environ['AWS_ACCESS_KEY_ID'])
-   print('AWS secret key ',os.environ['AWS_SECRET_ACCESS_KEY'])
-   print('AWS session token ',os.environ['AWS_SESSION_TOKEN'])
-   print('AWS default region ',os.environ['AWS_DEFAULT_REGION'])
-   print('AWS profile name ',os.environ['AWS_PROFILE'])
+   try:
+      print('\nCredentials to be used :')
+      print('AWS access key ',os.environ['AWS_ACCESS_KEY_ID'])
+      print('AWS secret key ',os.environ['AWS_SECRET_ACCESS_KEY'])
+      print('AWS session token ',os.environ['AWS_SESSION_TOKEN'])
+      print('AWS default region ',os.environ['AWS_DEFAULT_REGION'])
+      print('AWS profile name ',os.environ['AWS_PROFILE'])
+   except KeyError:
+      print('Environment Variable not found')
+      menu() # ToDo add other credential info
    try:
       print('Token created at ',os.environ['AWS_TIMESTAMP'])
    except KeyError:
@@ -81,7 +89,6 @@ def show_instances():
             print('Public DNA : '+instance.public_dns_name)
          print("Region : ",region)
          print('------------------------------')
-   print('')
  
 def show_buckets():
    print('')
@@ -89,8 +96,7 @@ def show_buckets():
    print('')
    s3 = boto3.resource('s3')
    for bucket in s3.buckets.all():
-      print(bucket.name)
-   print('')
+      print('- ',bucket.name)
 
 def show_ip():
    print('')
@@ -108,7 +114,6 @@ def show_ip():
             count += 1
       if count == '0':
          print('No Elastic IPs unused found.')
-   print('')
 
 
 
@@ -134,5 +139,6 @@ if __name__ == '__main__':
       print('Token expired, exiting...')
       sys.exit(1)
    except KeyboardInterrupt:
+      print('')
       print('Ok, ok, quitting...')
       sys.exit(0)
