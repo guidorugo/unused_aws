@@ -130,15 +130,19 @@ def show_elb():
       ec2r = boto3.client('ec2', region_name=region)
       for elbs in lb['LoadBalancerDescriptions']:
          if len(elbs['Instances']) == 0:
-            print(elbs['LoadBalancerName'],' in ',region['RegionName'])
+            print(elbs['LoadBalancerName'],' in ',region)
+
+def test_conn():
+   try:
+      test = boto3.resource('s3')
+   except ClientError:
+      print('There is an issue with the credentials')
+      sys.exit(1)
 
 if __name__ == '__main__':
    print('Menu\n')
    try:
       main()
-   except ClientError:
-      print('Token expired, exiting...')
-      sys.exit(1)
    except KeyboardInterrupt:
       print('')
       print('Ok, ok, quitting...')
