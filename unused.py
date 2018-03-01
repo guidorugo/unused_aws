@@ -6,7 +6,6 @@ import os
 import datetime
 import sys
 import getopt
-import argparse
 import csv
 from botocore.exceptions import ClientError
 
@@ -14,12 +13,6 @@ from botocore.exceptions import ClientError
 #  - Multithreading / Multiprocessing
 #  - STS
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--service", default='all', metavar='<ebs|ec|ec2|rds|s3|all>', nargs='?', help='Service(s) to scrape')
-parser.add_argument("--region", default='all', metavar='<us-east-1>,<eu-west-1>,<...>', nargs='?', help='AWS Region')
-parser.add_argument("--output", default='all', metavar='<table|csv|all>', nargs='?', help='Output format')
-args = parser.parse_args()
-print('')
 
 def main():
   if len(sys.argv) == 1:  
@@ -119,7 +112,7 @@ def show_ip():
 
 
 def show_elb():
-   print('')
+   print('')   
    print('Showing elb')
    print('')
    elb = boto3.client('elb')
@@ -140,7 +133,17 @@ def test_conn():
       sys.exit(1)
 
 if __name__ == '__main__':
-   print('Menu\n')
+   import argparse
+   parser = argparse.ArgumentParser()
+   parser.add_argument('--service', default='all', metavar='<ebs|ec|ec2|rds|s3|all>', nargs='?', help='Service(s) to scrape')
+   parser.add_argument('--region', default='all', metavar='<us-east-1>,<eu-west-1>,<...>', nargs='?', help='AWS Region')
+   parser.add_argument('--output', default='all', metavar='<table|csv|all>', nargs='?', help='Output format')
+   parser.add_argument('-q', '--quiet', action='store_false', dest='verbose', default=True, help='Show as minimum as possible')
+   args = parser.parse_args()
+   test_conn()
+   #parser = argparse.ArgumentParser()
+   if args.verbose:
+      print('\nMenu\n')
    try:
       main()
    except KeyboardInterrupt:
