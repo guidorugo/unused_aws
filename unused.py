@@ -96,7 +96,6 @@ def show_ip():
    print('')
    print('Showing Elastic IPs unused')
    print('')
-   count = 0
    client = boto3.client('ec2')
    regions = [region['RegionName'] for region in client.describe_regions()['Regions']]
    for region in regions:
@@ -105,16 +104,12 @@ def show_ip():
       for address in adresses:
          if 'NetworkInterfaceId' not in address:
             print(address['PublicIp']," in ",region)
-            count += 1
-      if count == '0':
-         print('No Elastic IPs unused found.')
-
-
 
 def show_elb():
-   print('')   
-   print('Showing elb')
-   print('')
+   if args.verbose:
+      print('')   
+      print('Showing elb')
+      print('')
    elb = boto3.client('elb')
    ec2r = boto3.client('ec2')
    lb = elb.describe_load_balancers()
@@ -141,7 +136,6 @@ if __name__ == '__main__':
    parser.add_argument('-q', '--quiet', action='store_false', dest='verbose', default=True, help='Show as minimum as possible')
    args = parser.parse_args()
    test_conn()
-   #parser = argparse.ArgumentParser()
    if args.verbose:
       print('\nMenu\n')
    try:
