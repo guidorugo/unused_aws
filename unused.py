@@ -7,7 +7,7 @@ import datetime
 import sys
 import getopt
 import csv
-from botocore.exceptions import ClientError
+import botocore.exceptions
 
 # ToDo
 #  - Multithreading / Multiprocessing
@@ -122,9 +122,12 @@ def show_elb():
 
 def test_conn():
    try:
-      test = boto3.resource('s3')
-   except ClientError:
+      test = boto3.resource('ec2')
+   except botocore.exceptions.ClientError:
       print('There is an issue with the credentials')
+      sys.exit(1)
+   except botocore.exceptions.NoRegionError:   
+      print('There is an issue with the region.\nPlease, set up your region')
       sys.exit(1)
 
 if __name__ == '__main__':
