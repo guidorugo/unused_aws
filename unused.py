@@ -3,16 +3,13 @@
 import boto3
 import sys
 import os
-import datetime
 import sys
 import getopt
-import csv
 import botocore.exceptions
 
 # ToDo
 #  - Multithreading / Multiprocessing
 #  - STS
-
 
 def main():
   if len(sys.argv) == 1:  
@@ -127,8 +124,9 @@ def test_conn():
       print('There is an issue with the credentials')
       sys.exit(1)
    except botocore.exceptions.NoRegionError:   
-      print('There is an issue with the region.\nPlease, set up your region')
-      sys.exit(1)
+      print('There is an issue with the region. I coul not find REGION or DEFAULT_REGION.\nI will use "us-west-1" as default.')
+      os.environ['AWS_DEFAULT_REGION'] = 'us-west-1'
+      os.environ['AWS_REGION'] = 'us-west-1'
 
 if __name__ == '__main__':
    import argparse
