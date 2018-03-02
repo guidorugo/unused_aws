@@ -63,13 +63,13 @@ def show_credentials(): # Printing credentials into
    print('')
 
 def show_instances():
-   print('\nShowing stopped instances ')
-   print('(Instances stopped does not charge you)')
+   print('\nShowing stopped instances (Instances stopped does not charge you)')
    ec2 = boto3.client('ec2')
    regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
    for region in regions: 
       conection = boto3.resource('ec2', region_name=region)
       instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['stopped','terminated']}])
+      print('Instances in '+region)
       for instance in instances:
          print('')
          if instance is not None:
@@ -81,18 +81,18 @@ def show_instances():
                print('type       : '+instance.instance_type)
                if instance.public_dns_name:
                   print('Public DNA : '+instance.public_dns_name)
-               print("Region     : "+region)
-               print('------------------------------')
+               #print("Region     : "+region)
+               print('---------------------------------------')
 
 def instances_temp():
-   print('\n---------- Showing "tmp" / "temp" / "test" instances ----------')
+   print('\n---------- Showing "tmp" / "temp" / "test" running instances ----------\n')
    ec2 = boto3.client('ec2')
    regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
    for region in regions:
       conection = boto3.resource('ec2', region_name=region)
       instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']},{'Name': 'tag:Name', 'Values': ['*tmp*']},{'Name': 'instance-state-name', 'Values': ['running']},{'Name': 'tag:Name', 'Values': ['*temp*']},{'Name': 'instance-state-name', 'Values': ['running']},{'Name': 'tag:Name', 'Values': ['*test*']}])
+      print('Instances in '+region)
       for instance in instances:
-         print('')
          if instance is not None:
             if instance.tags is not None:
                for tag in instance.tags:
@@ -102,8 +102,8 @@ def instances_temp():
                print('type       : '+instance.instance_type)
                if instance.public_dns_name:
                   print('Public DNA : '+instance.public_dns_name)
-               print("Region     : "+region)
-               print('------------------------------') 
+               #print("Region     : "+region)
+               print('---------------------------------------') 
 
 def show_buckets():
    print('\nShowing buckets\n');
