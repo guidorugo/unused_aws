@@ -70,15 +70,16 @@ def show_instances():
       instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['stopped','terminated']}])
       for instance in instances:
          print('')
-         for tag in instance.tags:
-            if tag['Key'] == 'Name':
-               print('Name tag : ',tag['Value'])
-         print('ID : ',instance.id)
-         print('type : ',instance.instance_type)
-         if instance.public_dns_name:
-            print('Public DNA : '+instance.public_dns_name)
-         print("Region : ",region)
-         print('------------------------------')
+         if instance is not None:
+            for tag in instance.tags:
+               if tag['Key'] == 'Name':
+                  print('Name tag : ',tag['Value'])
+            print('ID : ',instance.id)
+            print('type : ',instance.instance_type)
+            if instance.public_dns_name:
+               print('Public DNA : '+instance.public_dns_name)
+            print("Region : ",region)
+            print('------------------------------')
  
 def show_buckets():
    print('')
