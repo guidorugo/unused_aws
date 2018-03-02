@@ -52,7 +52,7 @@ def show_credentials(): # Printing credentials into
       print('AWS default region ',os.environ['AWS_DEFAULT_REGION'])
       print('AWS profile name ',os.environ['AWS_PROFILE'])
    except KeyError:
-      print('Environment Variable not found')
+      print('Environment Variable not found.')
       menu() # ToDo add other credential info
    try:
       print('Token created at ',os.environ['AWS_TIMESTAMP'])
@@ -71,15 +71,16 @@ def show_instances():
       for instance in instances:
          print('')
          if instance is not None:
-            for tag in instance.tags:
-               if tag['Key'] == 'Name':
-                  print('Name tag : ',tag['Value'])
-            print('ID : ',instance.id)
-            print('type : ',instance.instance_type)
-            if instance.public_dns_name:
-               print('Public DNA : '+instance.public_dns_name)
-            print("Region : ",region)
-            print('------------------------------')
+            if instance.tags is not None:
+               for tag in instance.tags:
+                  if tag['Key'] == 'Name':
+                     print('Name tag : ',tag['Value'])
+               print('ID : ',instance.id)
+               print('type : ',instance.instance_type)
+               if instance.public_dns_name:
+                  print('Public DNA : '+instance.public_dns_name)
+               print("Region : ",region)
+               print('------------------------------')
  
 def show_buckets():
    print('')
