@@ -63,9 +63,13 @@ def show_credentials(): # Printing credentials into
    print('')
 
 def show_instances():
+   try:
+      ec2 = boto3.client('ec2')
+      regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
+   except botocore.exceptions.ClientError:
+      print('\nToken expired. Sorry :(')
+      sys.exit(1)
    print('\nShowing stopped instances (Instances stopped does not charge you)')
-   ec2 = boto3.client('ec2')
-   regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
    for region in regions: 
       conection = boto3.resource('ec2', region_name=region)
       instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['stopped','terminated']}])
@@ -81,13 +85,16 @@ def show_instances():
                print('type       : '+instance.instance_type)
                if instance.public_dns_name:
                   print('Public DNA : '+instance.public_dns_name)
-               #print("Region     : "+region)
                print('---------------------------------------')
 
 def instances_temp():
    print('\n---------- Showing "tmp" / "temp" / "test" running instances ----------\n')
-   ec2 = boto3.client('ec2')
-   regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
+   try:
+      ec2 = boto3.client('ec2')
+      regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
+   except botocore.exceptions.ClientError:
+      print('\nToken expired. Sorry :(')
+      sys.exit(1)
    for region in regions:
       conection = boto3.resource('ec2', region_name=region)
       instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']},{'Name': 'tag:Name', 'Values': ['*tmp*']},{'Name': 'instance-state-name', 'Values': ['running']},{'Name': 'tag:Name', 'Values': ['*temp*']},{'Name': 'instance-state-name', 'Values': ['running']},{'Name': 'tag:Name', 'Values': ['*test*']}])
@@ -102,20 +109,27 @@ def instances_temp():
                print('type       : '+instance.instance_type)
                if instance.public_dns_name:
                   print('Public DNA : '+instance.public_dns_name)
-               #print("Region     : "+region)
                print('---------------------------------------') 
 
 def show_buckets():
    print('\nShowing buckets\n');
-   s3 = boto3.resource('s3')
-   for bucket in s3.buckets.all():
-      print('- '+bucket.name)
-   print('')
+   try:
+      s3 = boto3.resource('s3')
+      for bucket in s3.buckets.all():
+         print('- '+bucket.name)
+      print('')
+   except botocore.exceptions.ClientError:
+      print('\nToken expired. Sorry :(')
+      sys.exit(1)
 
 def show_ip():
    print('\nShowing Elastic IPs unused\n')
-   client = boto3.client('ec2')
-   regions = [region['RegionName'] for region in client.describe_regions()['Regions']]
+   try:
+      client = boto3.client('ec2')
+      regions = [region['RegionName'] for region in client.describe_regions()['Regions']]
+   except botocore.exceptions.ClientError:
+      print('\nToken expired. Sorry')
+      sys.exit(1)
    for region in regions:
       client = boto3.client('ec2', region_name=region)
       adresses = client.describe_addresses()['Addresses']
@@ -125,10 +139,14 @@ def show_ip():
 
 def show_elb():
    print('\nShowing elb\n')
-   elb = boto3.client('elb')
-   ec2r = boto3.client('ec2')
-   lb = elb.describe_load_balancers()
-   regions = [region['RegionName'] for region in ec2r.describe_regions()['Regions']]
+   try:
+      elb = boto3.client('elb')
+      ec2r = boto3.client('ec2')
+      lb = elb.describe_load_balancers()
+      regions = [region['RegionName'] for region in ec2r.describe_regions()['Regions']]
+   except botocore.exceptions.ClientError:
+      print('\nToken expired. Sorry :(')
+      sys.exit(1)
    for region in regions:
       ec2r = boto3.client('ec2', region_name=region)
       for elbs in lb['LoadBalancerDescriptions']:
@@ -137,9 +155,12 @@ def show_elb():
 
 def test_conn():
    try:
-      test = boto3.resource('ec2')
+      s2 = boto3.resource('s3')
+      ec2 = boto3.client('ec2')
+      regions = [region['RegionName'] for region in ec2r.describe_regions()['Regions']]
+      elb = boto3.client('elb')
    except botocore.exceptions.ClientError:
-      print('There is an issue with the credentials')
+      print('There is an issue with the credentials. Probably with the token.')
       sys.exit(1)
    except botocore.exceptions.NoRegionError:   
       print('There is an issue with the region. I coul not find REGION or DEFAULT_REGION.\nI will use "us-west-1" as default.')
@@ -147,16 +168,7 @@ def test_conn():
       os.environ['AWS_REGION'] = 'us-west-1'
 
 if __name__ == '__main__':
-   #import argparse
-   #parser = argparse.ArgumentParser()
-   #parser.add_argument('--service', default='all', metavar='<ebs|ec|ec2|rds|s3|all>', nargs='?', help='Service(s) to scrape')
-   #parser.add_argument('--region', default='all', metavar='<us-east-1>,<eu-west-1>,<...>', nargs='?', help='AWS Region')
-   #parser.add_argument('--output', default='all', metavar='<table|csv|all>', nargs='?', help='Output format')
-   #parser.add_argument('-q', '--quiet', action='store_false', dest='verbose', default=True, help='Show as minimum as possible')
-   #args = parser.parse_args()
    test_conn()
-   #if args.verbose:
-   #   print('\nMenu\n')
    print('\nMenu\n')
    try:
       main()
