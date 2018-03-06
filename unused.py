@@ -163,19 +163,17 @@ def test_conn():
       sts = session.client('sts')
       sts.get_caller_identity()
       #s3 = boto3.resource('s3')
-      #ec2 = boto3.client('ec2')
+      ec2 = boto3.client('ec2')
       regions = [region['RegionName'] for region in ec2r.describe_regions()['Regions']]
       #elb = boto3.client('elb')
-   except botocore.exceptions.ClientError:
-      print('There is an issue with the credentials. Probably with the token.')
-      sys.exit(1)
+   except botocore.exceptions.ClientError as ex:
+      if ex.response['Error']['Code'] == 'ExpiredToken':
+         print('There is an issue with the credentials. Probably with the token.')
+         sys.exit(1)
    except botocore.exceptions.NoRegionError:   
       print('There is an issue with the region. I coul not find REGION or DEFAULT_REGION.\nI will use "us-west-1" as default.')
       os.environ['AWS_DEFAULT_REGION'] = 'us-west-1'
       os.environ['AWS_REGION'] = 'us-west-1'
-   except ClientError as ex:
-      if ex.response['Error']['Code'] == 'ExpiredToken':
-         new_token() 
 
 def list_profiles():
    sts = boto3.Session()
