@@ -12,7 +12,7 @@ import botocore.exceptions
 #  - STS
 
 def main():
-  if len(sys.argv) == 1:  
+  if len(sys.argv) == 1:  #Just put this for V2
       menu()
   else:
       print('API')
@@ -43,9 +43,9 @@ def menu():
        show_elb()
      else: 
        print "Unknown option selected. Exiting..."
-       sys.exit(0) 
+       sys.exit(0) # Exiting without errors
 
-def show_credentials(): # Printing credentials into
+def show_credentials():
    try:
       print('\nCredentials to be used :')
       print('AWS access key '+os.environ['AWS_ACCESS_KEY_ID'])
@@ -53,13 +53,15 @@ def show_credentials(): # Printing credentials into
       print('AWS session token '+os.environ['AWS_SESSION_TOKEN'])
       print('AWS default region '+os.environ['AWS_DEFAULT_REGION'])
       print('AWS profile name '+os.environ['AWS_PROFILE'])
-   except KeyError:
+   except KeyError: # Do not explode if environs could not be loaded
       print('Environment Variable not found.')
-      menu() # ToDo add other credential info
-   try:
+      menu()
+   try: # ToDo : edit okta-aws to print a timestamp for token expiration
       print('Token created at '+os.environ['AWS_TIMESTAMP'])
    except KeyError:
       pass
+   print('')
+   list_profiles()
    print('')
 
 def show_instances():
@@ -73,7 +75,7 @@ def show_instances():
    for region in regions: 
       conection = boto3.resource('ec2', region_name=region)
       instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['stopped','terminated']}])
-      print('Instances in '+region)
+      #print('Instances in '+region)
       for instance in instances:
          print('')
          if instance is not None:
@@ -85,6 +87,7 @@ def show_instances():
                print('type       : '+instance.instance_type)
                if instance.public_dns_name:
                   print('Public DNA : '+instance.public_dns_name)
+               print('Region     : '+region)
                print('---------------------------------------')
 
 def instances_temp():
@@ -98,7 +101,7 @@ def instances_temp():
    for region in regions:
       conection = boto3.resource('ec2', region_name=region)
       instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']},{'Name': 'tag:Name', 'Values': ['*tmp*']},{'Name': 'instance-state-name', 'Values': ['running']},{'Name': 'tag:Name', 'Values': ['*temp*']},{'Name': 'instance-state-name', 'Values': ['running']},{'Name': 'tag:Name', 'Values': ['*test*']}])
-      print('Instances in '+region)
+      #print('Instances in '+region)
       for instance in instances:
          if instance is not None:
             if instance.tags is not None:
@@ -109,6 +112,7 @@ def instances_temp():
                print('type       : '+instance.instance_type)
                if instance.public_dns_name:
                   print('Public DNA : '+instance.public_dns_name)
+               print('Region     : '+region)
                print('---------------------------------------') 
 
 def show_buckets():
@@ -154,19 +158,14 @@ def show_elb():
             print(elbs['LoadBalancerName']+' in '+region)
 
 def test_conn():
-   #session = boto3.Session(profile_name=profile)
-   #sts = session.client('sts')
-   #try:
-   #   sts.get_caller_identity()
-   #except ClientError as ex:
-   #   if ex.response['Error']['Code'] == 'ExpiredToken':
-   #      new_token()
-
    try:
-      s3 = boto3.resource('s3')
-      ec2 = boto3.client('ec2')
+      session = boto3.Session()
+      sts = session.client('sts')
+      sts.get_caller_identity()
+      #s3 = boto3.resource('s3')
+      #ec2 = boto3.client('ec2')
       regions = [region['RegionName'] for region in ec2r.describe_regions()['Regions']]
-      elb = boto3.client('elb')
+      #elb = boto3.client('elb')
    except botocore.exceptions.ClientError:
       print('There is an issue with the credentials. Probably with the token.')
       sys.exit(1)
@@ -174,9 +173,14 @@ def test_conn():
       print('There is an issue with the region. I coul not find REGION or DEFAULT_REGION.\nI will use "us-west-1" as default.')
       os.environ['AWS_DEFAULT_REGION'] = 'us-west-1'
       os.environ['AWS_REGION'] = 'us-west-1'
+   except ClientError as ex:
+      if ex.response['Error']['Code'] == 'ExpiredToken':
+         new_token() 
 
-#def new_token():
-
+def list_profiles():
+   sts = boto3.Session()
+   for i in sts.available_profiles:
+      print i
 
 if __name__ == '__main__':
    test_conn()
