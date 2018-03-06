@@ -3,7 +3,6 @@
 import boto3
 import sys
 import os
-import sys
 import getopt
 import botocore.exceptions
 
@@ -71,13 +70,13 @@ def show_instances():
    except botocore.exceptions.ClientError:
       print('\nToken expired. Sorry :(')
       sys.exit(1)
-   print('\nShowing stopped instances (Instances stopped does not charge you)')
+   print('\nShowing stopped instances (Instances stopped does not charge you)\n')
    for region in regions: 
       conection = boto3.resource('ec2', region_name=region)
       instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['stopped','terminated']}])
       #print('Instances in '+region)
       for instance in instances:
-         print('')
+         #print('')
          if instance is not None:
             if instance.tags is not None:
                for tag in instance.tags:
@@ -88,7 +87,7 @@ def show_instances():
                if instance.public_dns_name:
                   print('Public DNA : '+instance.public_dns_name)
                print('Region     : '+region)
-               print('---------------------------------------')
+               #print('---------------------------------------')
 
 def instances_temp():
    print('\n---------- Showing "tmp" / "temp" / "test" running instances ----------\n')
