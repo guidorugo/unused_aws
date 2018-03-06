@@ -154,8 +154,16 @@ def show_elb():
             print(elbs['LoadBalancerName']+' in '+region)
 
 def test_conn():
+   #session = boto3.Session(profile_name=profile)
+   #sts = session.client('sts')
+   #try:
+   #   sts.get_caller_identity()
+   #except ClientError as ex:
+   #   if ex.response['Error']['Code'] == 'ExpiredToken':
+   #      new_token()
+
    try:
-      s2 = boto3.resource('s3')
+      s3 = boto3.resource('s3')
       ec2 = boto3.client('ec2')
       regions = [region['RegionName'] for region in ec2r.describe_regions()['Regions']]
       elb = boto3.client('elb')
@@ -166,6 +174,9 @@ def test_conn():
       print('There is an issue with the region. I coul not find REGION or DEFAULT_REGION.\nI will use "us-west-1" as default.')
       os.environ['AWS_DEFAULT_REGION'] = 'us-west-1'
       os.environ['AWS_REGION'] = 'us-west-1'
+
+#def new_token():
+
 
 if __name__ == '__main__':
    test_conn()
