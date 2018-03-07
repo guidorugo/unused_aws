@@ -58,7 +58,7 @@ def show_credentials():
       print('\033[31mAWS profile name\033[0m ' + os.environ['AWS_PROFILE'])
    except KeyError: # Do not explode if environs could not be loaded
       print('Environment Variable not found.\n')
-      menu()
+      sys.exit(1)
    try: # ToDo : edit okta-aws to print a timestamp for token expiration
       print('Token created at '+os.environ['AWS_TIMESTAMP'])
    except KeyError:
@@ -200,3 +200,6 @@ if __name__ == '__main__':
       print('')
       print('Ok, ok, quitting...')
       sys.exit(0)
+   except botocore.exceptions.NoCredentialsError:
+      print('\033[31mIt seems your credentials are missing.\033[0m')
+      sys.exit(1)
