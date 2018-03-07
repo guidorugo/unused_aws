@@ -46,6 +46,7 @@ def menu():
 
 def show_credentials():
    try:
+      test = os.environ['AWS_PROFILE']
       print('\nCredentials to be used :')
       print('AWS access key '+os.environ['AWS_ACCESS_KEY_ID'])
       print('AWS secret key '+os.environ['AWS_SECRET_ACCESS_KEY'])
@@ -53,7 +54,7 @@ def show_credentials():
       print('AWS default region '+os.environ['AWS_DEFAULT_REGION'])
       print('AWS profile name '+os.environ['AWS_PROFILE'])
    except KeyError: # Do not explode if environs could not be loaded
-      print('Environment Variable not found.')
+      print('Environment Variable not found.\n')
       menu()
    try: # ToDo : edit okta-aws to print a timestamp for token expiration
       print('Token created at '+os.environ['AWS_TIMESTAMP'])
@@ -162,12 +163,18 @@ def test_conn():
       sts = session.client('sts')
       sts.get_caller_identity()
       #s3 = boto3.resource('s3')
+      
       ec2 = boto3.client('ec2')
       regions = [region['RegionName'] for region in ec2r.describe_regions()['Regions']]
-      #elb = boto3.client('elb')
    except botocore.exceptions.ClientError as ex:
       if ex.response['Error']['Code'] == 'ExpiredToken':
-         print('There is an issue with the credentials. Probably with the token.')
+         print('The token seems expired.')
+         sys.exit(1)
+      elif ex.response['Error']['Code'] == 'AccessDenied':
+         print('\nAccess denied')
+         sys.exit(1)
+      else:
+         print('Error unknown')
          sys.exit(1)
    except botocore.exceptions.NoRegionError:   
       print('There is an issue with the region. I coul not find REGION or DEFAULT_REGION.\nI will use "us-west-1" as default.')
