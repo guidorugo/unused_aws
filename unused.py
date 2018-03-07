@@ -1,5 +1,4 @@
 #!/usr/bin/python2.7
-
 import boto3
 import sys
 import os
@@ -37,7 +36,7 @@ def menu():
      elif selection == '6':
        show_elb()
      else: 
-       print "Unknown option selected. Exiting..."
+       print('Unknown option selected. Exiting...')
        sys.exit(0) # Exiting without errors
 
 def show_everything():
@@ -166,6 +165,8 @@ def test_conn():
       regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
       s3 = boto3.resource('s3')
       test = s3.buckets.all()
+      for region in regions:
+         ec2 = boto3.client('ec2', region_name=region)
    except botocore.exceptions.ClientError as ex:
       if ex.response['Error']['Code'] == 'ExpiredToken':
          print('The token seems expired.')
@@ -174,18 +175,21 @@ def test_conn():
          print('\nAccess denied')
          sys.exit(1)
       else:
-         print('Error unknown')
+         print('Error unknown. Error : ' + ex.response['Error']['Code'])
          sys.exit(1)
    except botocore.exceptions.NoRegionError:   
-      print('\033[31mCoul not find REGION or DEFAULT_REGION in OS environs.\nWill use \033[0m"us-west-1"\033[31m as default.\033[0m')
+      print('\033[31mCoul not find REGION or DEFAULT_REGION in OS environs.\nWill use "\033[0mus-west-1\033[31m" as default.\033[0m')
       os.environ['AWS_DEFAULT_REGION'] = 'us-west-1'
       os.environ['AWS_REGION'] = 'us-west-1'
+   except botocore.exceptions.NoCredentialsError:
+      print('\033[31mIt seems your credentials are missing.\033[0m')
+      sys.exit(1)
 
 def list_profiles():
    print('\033[32mProfiles\033[0m\n')
    sts = boto3.Session()
    for i in sts.available_profiles:
-      print i
+      print(i)
 
 if __name__ == '__main__':
    test_conn()
