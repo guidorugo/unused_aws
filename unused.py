@@ -26,6 +26,7 @@ def menu():
        show_everything()
      elif selection == '2':
        show_credentials()
+       list_profiles()
      elif selection == '3': 
        show_instances()
        instances_temp()
@@ -41,6 +42,7 @@ def menu():
 
 def show_everything():
    show_credentials()
+   list_profiles()
    show_instances()
    instances_temp()
    show_ip()
@@ -49,22 +51,18 @@ def show_everything():
 
 def show_credentials():
    try:
-      test = os.environ['AWS_PROFILE']
+      #test = os.environ['AWS_PROFILE']
       print('\n\033[32mCredentials to be used :\033[0m\n')
-      print('\033[31mAWS access key\033[0m ' + os.environ['AWS_ACCESS_KEY_ID'])
-      print('\033[31mAWS secret key\033[0m ' + os.environ['AWS_SECRET_ACCESS_KEY'])
-      print('\033[31mAWS session token\033[0m ' + os.environ['AWS_SESSION_TOKEN'])
-      print('\033[31mAWS default region\033[0m ' + os.environ['AWS_DEFAULT_REGION'])
-      print('\033[31mAWS profile name\033[0m ' + os.environ['AWS_PROFILE'])
+      print('\033[31mAWS access key\033[0m ' + boto3.Session().get_credentials().access_key) 
+      #print('\033[31mAWS access key\033[0m ' + os.environ['AWS_ACCESS_KEY_ID'])
+      print('\033[31mAWS secret key\033[0m ' + boto3.Session().get_credentials().secret_key)
+      #print('\033[31mAWS secret key\033[0m ' + os.environ['AWS_SECRET_ACCESS_KEY'])
+      #print('\033[31mAWS session token\033[0m ' + os.environ['AWS_SESSION_TOKEN'])
+      #print('\033[31mAWS default region\033[0m ' + os.environ['AWS_DEFAULT_REGION'])
+      #print('\033[31mAWS profile name\033[0m ' + os.environ['AWS_PROFILE'])
    except KeyError: # Do not explode if environs could not be loaded
-      print('Environment Variable not found.\n')
+      print('AWS config not found. Cannot continue without this\n')
       sys.exit(1)
-   try: # ToDo : edit okta-aws to print a timestamp for token expiration
-      print('Token created at '+os.environ['AWS_TIMESTAMP'])
-   except KeyError:
-      pass
-   print('')
-   list_profiles()
    print('')
 
 def show_instances():
@@ -190,6 +188,7 @@ def list_profiles():
    sts = boto3.Session()
    for i in sts.available_profiles:
       print(i)
+   print('')
 
 if __name__ == '__main__':
    test_conn()
