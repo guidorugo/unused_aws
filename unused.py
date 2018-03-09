@@ -4,19 +4,27 @@ import sys
 import os
 import getopt
 import botocore.exceptions
+import argparse
 
 # ToDo
 #  - Multithreading / Multiprocessing
 #  - STS
 
-def main():
+parser = argparse.ArgumentParser()
+parser.add_argument('--region', default='us-east-1', metavar='<us-east-1>,<eu-west-1>,<...>', nargs='?', help='AWS Region')
+parser.add_argument('--service', default='all', metavar='<ebs|ec|ec2|rds|s3|all>', nargs='?', help='Service(s) to scrape')
+args   = parser.parse_args()
+
+def main(args):
   if len(sys.argv) == 1:  #Just put this for V2
+      api = False
       menu()
   else:
       print('API')
+      api = True
 
 def menu():
-   menu = {'1':'[1] Show everything','2':'[2] Show credentials','3':'[3] Show instances stopped','4':'[4] Show buckets','5':'[5] Show unused IPs','6':'[6] Show Elastic LoadBalancer unused'}
+   menu = {'1':'[\033[33m1\033[0m] Show everything','2':'[\033[33m2\033[0m] Show credentials','3':'[\033[33m3\033[0m] Show instances stopped','4':'[\033[33m4\033[0m] Show buckets','5':'[\033[33m5\033[0m] Show unused IPs','6':'[\033[33m6\033[0m] Show Elastic LoadBalancer unused'}
    while True: 
      for key, value in (sorted(menu.iteritems())): 
        print(value)
@@ -43,11 +51,11 @@ def menu():
 def show_everything():
    show_credentials()
    list_profiles()
-   show_instances()
-   instances_temp()
-   show_ip()
-   show_elb()
-   show_buckets()
+   show_instances(args)
+   instances_temp(args)
+   show_ip(args)
+   show_elb(args)
+   show_buckets(args)
 
 def show_credentials():
    try:
@@ -65,7 +73,7 @@ def show_credentials():
       sys.exit(1)
    print('')
 
-def show_instances():
+def show_instances(args):
    try:
       ec2 = boto3.client('ec2')
       regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
@@ -90,7 +98,7 @@ def show_instances():
                print('\033[32mRegion      \033[0m'+region)
                print('---------------------------------------')
 
-def instances_temp():
+def instances_temp(args):
    print('\n\033[32mShowing "tmp" / "temp" / "test" running instances\033[0m\n')
    try:
       ec2 = boto3.client('ec2')
@@ -115,7 +123,7 @@ def instances_temp():
                print('\033[32mRegion      \033[0m'+region)
                print('---------------------------------------') 
 
-def show_buckets():
+def show_buckets(args):
    print('\n\033[32mShowing buckets\033[0m\n');
    try:
       s3 = boto3.resource('s3')
@@ -126,7 +134,7 @@ def show_buckets():
       print('\n\033[31mToken expired. Sorry :(\033[0m')
       sys.exit(1)
 
-def show_ip():
+def show_ip(args):
    print('\n\033[32mShowing Elastic IPs unused\033[0m\n')
    try:
       client = boto3.client('ec2')
@@ -141,7 +149,7 @@ def show_ip():
          if 'NetworkInterfaceId' not in address:
             print(address['PublicIp']+"\033[32m in \033[0m"+region)
 
-def show_elb():
+def show_elb(args):
    print('\n\033[32mShowing elb\033[0m\n')
    try:
       elb = boto3.client('elb')
@@ -157,7 +165,7 @@ def show_elb():
          if len(elbs['Instances']) == 0:
             print(elbs['LoadBalancerName']+' in '+region)
 
-def test_conn():
+def test_conn(args):
    try:
       ec2 = boto3.client('ec2')
       regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
@@ -191,10 +199,10 @@ def list_profiles():
    print('')
 
 if __name__ == '__main__':
-   test_conn()
+   test_conn(args)
    print('\n\033[32mMenu\033[0m\n')
    try:
-      main()
+      main(args)
    except KeyboardInterrupt:
       print('')
       print('Ok, ok, quitting...')
