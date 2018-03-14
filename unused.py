@@ -78,14 +78,14 @@ def menu():
        show_credentials(args)
        list_profiles()
      elif selection == '3': 
-       show_instances()
-       instances_temp()
+       show_instances(args)
+       instances_temp(args)
      elif selection == '4':
-       show_buckets()
+       show_buckets(args)
      elif selection == '5':
-       show_ip()
+       show_ip(args)
      elif selection == '6':
-       show_elb()
+       show_elb(args)
      else: 
        print('Unknown option selected. Exiting...')
        sys.exit(0) # Exiting without errors
