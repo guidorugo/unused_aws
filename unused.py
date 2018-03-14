@@ -58,7 +58,7 @@ def main(args):
          show_credentials(args)
          list_profiles()
          for profile in boto3.Session().available_profiles:
-            if (not fnmatch(profile, 'default')) and (not fnmatch(profile, 'assumed')):
+            if (not fnmatch(profile, 'default')) and (not fnmatch(profile, '*assumed*')):
                boto3.setup_default_session(profile_name=profile)
                show_everything(args)
       #except:
@@ -93,7 +93,7 @@ def menu():
 def show_everything(args):
       from fnmatch import fnmatch, fnmatchcase
       for profile in boto3.Session().available_profiles:
-         if (not fnmatch(profile, 'default')) and (not fnmatch(profile, 'arn:aws')):
+         if (not fnmatch(profile, 'default')) and (not fnmatch(profile, '*assumed*')):
             print('\033[93mAWS profile \033[0m' + profile)
             boto3.setup_default_session(profile_name=profile)
             show_instances(args)
