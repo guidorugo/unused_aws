@@ -5,23 +5,55 @@ import os
 import getopt
 import botocore.exceptions
 import argparse
+import re
 
 # ToDo
 #  - Multithreading / Multiprocessing
 #  - STS
 
+profiles = None
 parser = argparse.ArgumentParser()
-parser.add_argument('--region', default='us-east-1', metavar='<us-east-1>,<eu-west-1>,<...>', nargs='?', help='AWS Region')
-parser.add_argument('--service', default='all', metavar='<ebs|ec|ec2|rds|s3|all>', nargs='?', help='Service(s) to scrape')
-args   = parser.parse_args()
+parser.add_argument('--mail', '-m', default=None, metavar='destiny@mail.com', nargs='?', help='Mail to send report')
+args = parser.parse_args()
+
+def check_mail(args):
+   if args.mail is not None:
+      match = re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', args.mail)
+      if match == None:
+         print('\nMail address misspelled.')
+         sys.exit(1)
+
+def test_conn(args):
+   try:
+      ec2 = boto3.client('ec2')
+      regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
+      s3 = boto3.resource('s3')
+      test = s3.buckets.all()
+      for region in regions:
+         ec2 = boto3.client('ec2', region_name=region)
+   except botocore.exceptions.ClientError as ex:
+      if ex.response['Error']['Code'] == 'ExpiredToken':
+         print('The token seems expired.')
+         sys.exit(1)
+      elif ex.response['Error']['Code'] == 'AccessDenied':
+         print('\nAccess denied')
+         sys.exit(1)
+      else:
+         print('Error unknown. Error : ' + ex.response['Error']['Code'])
+         sys.exit(1)
+   except botocore.exceptions.NoRegionError:   
+      print('\n\033[31mCould not find REGION or DEFAULT_REGION in OS environs.\nWill use "\033[0mus-west-1\033[31m" as default.\033[0m')
+      os.environ['AWS_DEFAULT_REGION'] = 'us-west-1'
+      os.environ['AWS_REGION'] = 'us-west-1'
+   except botocore.exceptions.NoCredentialsError:
+      print('\033[31mIt seems your credentials are missing.\033[0m\n')
 
 def main(args):
-  if len(sys.argv) == 1:  #Just put this for V2
-      api = False
+  if len(sys.argv) == 1:
+      print('\n\033[32mMenu\033[0m\n') 
       menu()
   else:
-      print('API')
-      api = True
+      show_everything(args)
 
 def menu():
    menu = {'1':'[\033[33m1\033[0m] Show everything','2':'[\033[33m2\033[0m] Show credentials','3':'[\033[33m3\033[0m] Show instances stopped','4':'[\033[33m4\033[0m] Show buckets','5':'[\033[33m5\033[0m] Show unused IPs','6':'[\033[33m6\033[0m] Show Elastic LoadBalancer unused'}
@@ -31,9 +63,9 @@ def menu():
      print('')
      selection = raw_input('Select : ') 
      if selection == '1': 
-       show_everything()
+       show_everything(args)
      elif selection == '2':
-       show_credentials()
+       show_credentials(args)
        list_profiles()
      elif selection == '3': 
        show_instances()
@@ -48,28 +80,32 @@ def menu():
        print('Unknown option selected. Exiting...')
        sys.exit(0) # Exiting without errors
 
-def show_everything():
-   show_credentials()
-   list_profiles()
-   show_instances(args)
-   instances_temp(args)
-   show_ip(args)
-   show_elb(args)
-   show_buckets(args)
+def show_everything(args):
+      from fnmatch import fnmatch, fnmatchcase
+      for profile in boto3.Session().available_profiles:
+         if (not fnmatch(profile, 'default')) and (not fnmatch(profile, 'arn:aws')):
+            print('\033[93mAWS profile \033[0m' + profile)
+            boto3.setup_default_session()
+            show_credentials(args)
+            list_profiles()
+            show_instances(args)
+            instances_temp(args)
+            show_ip(args)
+            show_elb(args)
+            show_buckets(args)
 
-def show_credentials():
+def show_credentials(args):
    try:
-      #test = os.environ['AWS_PROFILE']
       print('\n\033[32mCredentials to be used :\033[0m\n')
+      #print('\033[31mAWS profile name\033[0m ' + boto3.Session().profile_name)
       print('\033[31mAWS access key\033[0m ' + boto3.Session().get_credentials().access_key) 
-      #print('\033[31mAWS access key\033[0m ' + os.environ['AWS_ACCESS_KEY_ID'])
       print('\033[31mAWS secret key\033[0m ' + boto3.Session().get_credentials().secret_key)
-      #print('\033[31mAWS secret key\033[0m ' + os.environ['AWS_SECRET_ACCESS_KEY'])
-      #print('\033[31mAWS session token\033[0m ' + os.environ['AWS_SESSION_TOKEN'])
-      #print('\033[31mAWS default region\033[0m ' + os.environ['AWS_DEFAULT_REGION'])
-      #print('\033[31mAWS profile name\033[0m ' + os.environ['AWS_PROFILE'])
+      print('\033[31mAWS seesion token\033[0m ' + boto3.Session().get_credentials().token)
+      print('\033[31mAWS region name\033[0m ' + boto3.Session().region_name)
    except KeyError: # Do not explode if environs could not be loaded
       print('AWS config not found. Cannot continue without this\n')
+      if args.mail is not None:
+         print('\033[31mDestination mail address\033[0m ' + args.mail)
       sys.exit(1)
    print('')
 
@@ -84,7 +120,6 @@ def show_instances(args):
    for region in regions: 
       conection = boto3.resource('ec2', region_name=region)
       instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['stopped','terminated']}])
-      #print('Instances in '+region)
       for instance in instances:
          if instance is not None:
             if instance.tags is not None:
@@ -109,7 +144,6 @@ def instances_temp(args):
    for region in regions:
       conection = boto3.resource('ec2', region_name=region)
       instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']},{'Name': 'tag:Name', 'Values': ['*tmp*']},{'Name': 'instance-state-name', 'Values': ['running']},{'Name': 'tag:Name', 'Values': ['*temp*']},{'Name': 'instance-state-name', 'Values': ['running']},{'Name': 'tag:Name', 'Values': ['*test*']}])
-      #print('Instances in '+region)
       for instance in instances:
          if instance is not None:
             if instance.tags is not None:
@@ -165,32 +199,6 @@ def show_elb(args):
          if len(elbs['Instances']) == 0:
             print(elbs['LoadBalancerName']+' in '+region)
 
-def test_conn(args):
-   try:
-      ec2 = boto3.client('ec2')
-      regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
-      s3 = boto3.resource('s3')
-      test = s3.buckets.all()
-      for region in regions:
-         ec2 = boto3.client('ec2', region_name=region)
-   except botocore.exceptions.ClientError as ex:
-      if ex.response['Error']['Code'] == 'ExpiredToken':
-         print('The token seems expired.')
-         sys.exit(1)
-      elif ex.response['Error']['Code'] == 'AccessDenied':
-         print('\nAccess denied')
-         sys.exit(1)
-      else:
-         print('Error unknown. Error : ' + ex.response['Error']['Code'])
-         sys.exit(1)
-   except botocore.exceptions.NoRegionError:   
-      print('\033[31mCoul not find REGION or DEFAULT_REGION in OS environs.\nWill use "\033[0mus-west-1\033[31m" as default.\033[0m')
-      os.environ['AWS_DEFAULT_REGION'] = 'us-west-1'
-      os.environ['AWS_REGION'] = 'us-west-1'
-   except botocore.exceptions.NoCredentialsError:
-      print('\033[31mIt seems your credentials are missing.\033[0m')
-      sys.exit(1)
-
 def list_profiles():
    print('\033[32mProfiles\033[0m\n')
    sts = boto3.Session()
@@ -199,8 +207,8 @@ def list_profiles():
    print('')
 
 if __name__ == '__main__':
+   check_mail(args)
    test_conn(args)
-   print('\n\033[32mMenu\033[0m\n')
    try:
       main(args)
    except KeyboardInterrupt:
@@ -210,3 +218,11 @@ if __name__ == '__main__':
    except botocore.exceptions.NoCredentialsError:
       print('\033[31mIt seems your credentials are missing.\033[0m')
       sys.exit(1)
+   except botocore.exceptions.ClientError as ex:
+      if ex.response['Error']['Code'] == 'ExpiredToken':
+         print('The token seems expired.')
+         sys.exit(1)
+   except botocore.vendored.requests.exceptions.SSLError:
+      print('Connection timed out')
+      sys.exit(1)
+
