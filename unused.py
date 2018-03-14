@@ -58,7 +58,7 @@ def main(args):
          show_credentials(args)
          list_profiles()
          for profile in boto3.Session().available_profiles:
-            if (not fnmatch(profile, 'default')) and (not fnmatch(profile, 'arn:aws')):
+            if (not fnmatch(profile, 'default')) and (not fnmatch(profile, 'assumed')):
                boto3.setup_default_session(profile_name=profile)
                show_everything(args)
       #except:
