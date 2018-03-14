@@ -8,7 +8,7 @@ Finds resources unused, unasigned or stopped in AWS
 
 OR
 
-`python -m test@test.com` This will execute show_everything()
+`python unused.py -m test@test.com` This will execute show_everything()
 
 ### Requirements
 
