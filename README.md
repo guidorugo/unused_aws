@@ -4,11 +4,11 @@ Finds resources unused, unasigned or stopped in AWS
 
 ## Usage
 
-python unused.py
+`python unused.py`
 
-- OR -
+OR
 
-python -m test@test.com # This will execute show_everything()
+`python -m test@test.com` # This will execute show_everything()
 
 # Requirements
 
