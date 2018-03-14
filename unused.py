@@ -53,7 +53,15 @@ def main(args):
       print('\n\033[32mMenu\033[0m\n') 
       menu()
   else:
-      show_everything(args)
+      #try:
+         from fnmatch import fnmatch, fnmatchcase
+         show_credentials(args)
+         list_profiles()
+         for profile in boto3.Session().available_profiles:
+            if (not fnmatch(profile, 'default')) and (not fnmatch(profile, 'arn:aws')):
+               boto3.setup_default_session(profile_name=profile)
+               show_everything(args)
+      #except:
 
 def menu():
    menu = {'1':'[\033[33m1\033[0m] Show everything','2':'[\033[33m2\033[0m] Show credentials','3':'[\033[33m3\033[0m] Show instances stopped','4':'[\033[33m4\033[0m] Show buckets','5':'[\033[33m5\033[0m] Show unused IPs','6':'[\033[33m6\033[0m] Show Elastic LoadBalancer unused'}
@@ -63,6 +71,8 @@ def menu():
      print('')
      selection = raw_input('Select : ') 
      if selection == '1': 
+       show_credentials(args)
+       list_profiles()
        show_everything(args)
      elif selection == '2':
        show_credentials(args)
@@ -85,9 +95,7 @@ def show_everything(args):
       for profile in boto3.Session().available_profiles:
          if (not fnmatch(profile, 'default')) and (not fnmatch(profile, 'arn:aws')):
             print('\033[93mAWS profile \033[0m' + profile)
-            boto3.setup_default_session()
-            show_credentials(args)
-            list_profiles()
+            boto3.setup_default_session(profile_name=profile)
             show_instances(args)
             instances_temp(args)
             show_ip(args)
@@ -97,7 +105,6 @@ def show_everything(args):
 def show_credentials(args):
    try:
       print('\n\033[32mCredentials to be used :\033[0m\n')
-      #print('\033[31mAWS profile name\033[0m ' + boto3.Session().profile_name)
       print('\033[31mAWS access key\033[0m ' + boto3.Session().get_credentials().access_key) 
       print('\033[31mAWS secret key\033[0m ' + boto3.Session().get_credentials().secret_key)
       print('\033[31mAWS seesion token\033[0m ' + boto3.Session().get_credentials().token)
@@ -116,7 +123,7 @@ def show_instances(args):
    except botocore.exceptions.ClientError:
       print('\n\033[31mToken expired. Sorry :(\033[0m')
       sys.exit(1)
-   print('\n\033[32mShowing stopped instances (Instances stopped does not charge you)\033[0m\n')
+   print('\n\033[32mShowing stopped instances\033[0m\n')
    for region in regions: 
       conection = boto3.resource('ec2', region_name=region)
       instances = conection.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['stopped','terminated']}])
