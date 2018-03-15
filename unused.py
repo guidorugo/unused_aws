@@ -13,15 +13,8 @@ import re
 
 profiles = None
 parser = argparse.ArgumentParser()
-parser.add_argument('--mail', '-m', default=None, metavar='destiny@mail.com', nargs='?', help='Mail to send report')
+parser.add_argument('--all', '-a', action='store_true', help='Show all')
 args = parser.parse_args()
-
-def check_mail(args):
-   if args.mail is not None:
-      match = re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', args.mail)
-      if match == None:
-         print('\nMail address misspelled.')
-         sys.exit(1)
 
 def test_conn(args):
    try:
@@ -52,8 +45,7 @@ def main(args):
   if len(sys.argv) == 1:
       print('\n\033[32mMenu\033[0m\n') 
       menu()
-  else:
-      #try:
+  elif args.all:
          from fnmatch import fnmatch, fnmatchcase
          show_credentials(args)
          list_profiles()
@@ -61,7 +53,6 @@ def main(args):
             if (not fnmatch(profile, 'default')) and (not fnmatch(profile, '*assumed*')):
                boto3.setup_default_session(profile_name=profile)
                show_everything(args)
-      #except:
 
 def menu():
    menu = {'1':'[\033[33m1\033[0m] Show everything','2':'[\033[33m2\033[0m] Show credentials','3':'[\033[33m3\033[0m] Show instances stopped','4':'[\033[33m4\033[0m] Show buckets','5':'[\033[33m5\033[0m] Show unused IPs','6':'[\033[33m6\033[0m] Show Elastic LoadBalancer unused'}
@@ -214,7 +205,6 @@ def list_profiles():
    print('')
 
 if __name__ == '__main__':
-   check_mail(args)
    test_conn(args)
    try:
       main(args)
