@@ -69,14 +69,34 @@ def menu():
        show_credentials(args)
        list_profiles()
      elif selection == '3': 
-       show_instances(args)
-       instances_temp(args)
+      from fnmatch import fnmatch, fnmatchcase
+      for profile in boto3.Session().available_profiles:
+         if (not fnmatch(profile, 'default')) and (not fnmatch(profile, '*assumed*')):
+            print('\033[93mAWS profile \033[0m' + profile)
+            boto3.setup_default_session(profile_name=profile)
+            show_instances(args)
+            instances_temp(args)
      elif selection == '4':
-       show_buckets(args)
+      from fnmatch import fnmatch, fnmatchcase
+      for profile in boto3.Session().available_profiles:
+         if (not fnmatch(profile, 'default')) and (not fnmatch(profile, '*assumed*')):
+            print('\033[93mAWS profile \033[0m' + profile)
+            boto3.setup_default_session(profile_name=profile)
+            show_buckets(args)
      elif selection == '5':
-       show_ip(args)
+      from fnmatch import fnmatch, fnmatchcase
+      for profile in boto3.Session().available_profiles:
+         if (not fnmatch(profile, 'default')) and (not fnmatch(profile, '*assumed*')):
+            print('\033[93mAWS profile \033[0m' + profile)
+            boto3.setup_default_session(profile_name=profile)
+            show_ip(args)
      elif selection == '6':
-       show_elb(args)
+      from fnmatch import fnmatch, fnmatchcase
+      for profile in boto3.Session().available_profiles:
+         if (not fnmatch(profile, 'default')) and (not fnmatch(profile, '*assumed*')):
+            print('\033[93mAWS profile \033[0m' + profile)
+            boto3.setup_default_session(profile_name=profile)
+            show_elb(args)
      else: 
        print('Unknown option selected. Exiting...')
        sys.exit(0) # Exiting without errors
