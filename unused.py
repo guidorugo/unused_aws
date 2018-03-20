@@ -49,10 +49,7 @@ def main(args):
          from fnmatch import fnmatch, fnmatchcase
          show_credentials(args)
          list_profiles()
-         for profile in boto3.Session().available_profiles:
-            if (not fnmatch(profile, 'default')) and (not fnmatch(profile, '*assumed*')):
-               boto3.setup_default_session(profile_name=profile)
-               show_everything(args)
+         show_everything(args)
 
 def menu():
    menu = {'1':'[\033[33m1\033[0m] Show everything','2':'[\033[33m2\033[0m] Show credentials','3':'[\033[33m3\033[0m] Show instances stopped','4':'[\033[33m4\033[0m] Show buckets','5':'[\033[33m5\033[0m] Show unused IPs','6':'[\033[33m6\033[0m] Show Elastic LoadBalancer unused'}
