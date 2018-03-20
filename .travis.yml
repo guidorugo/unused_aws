@@ -1,1 +1,14 @@
 language: python
+
+install:
+   - pip install boto3
+
+sudo: false
+
+matrix:
+  include:
+    - python: "2.7"
+
+notifications:
+  email:
+    guido.rugo@gmail.com
