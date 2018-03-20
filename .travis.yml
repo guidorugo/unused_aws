@@ -2,6 +2,7 @@ language: python
 
 install:
    - pip install boto3
+   - pip install boto
 
 sudo: false
 
