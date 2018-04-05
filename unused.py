@@ -20,7 +20,6 @@ def list_ec2():
    for profile in profiles:
       count = 0
       if (not fnmatch(profile, 'default')) and (not fnmatch(profile, '*assumed*')) and not None:
-         #print ('\nProcessing profile '+profile)
          boto3.setup_default_session(profile_name=profile) 
          if not args.region:
             ec2 = boto3.client('ec2', region_name='us-east-1') 
@@ -77,14 +76,12 @@ def show_ip():
             ec2 = boto3.client('ec2', region_name=args.region)
             regions = args.region.split()
          ips_table = PrettyTable(['\033[33mInstance ID\033[0m', '\033[33mPublic IP\033[0m', '\033[33mRegion\033[0m', '\033[33mStatus\033[0m'])
-   #print('\n\033[32mShowing Elastic IPs unused\033[0m\n')
          for region in regions:
             for address in boto3.client('ec2', region_name=region).describe_addresses()['Addresses']:
                if 'NetworkInterfaceId' in address:
                   status = '\033[32mIn used\033[0m'
                else:
                   status = '\033[31mUnused\033[0m'
-               #print(address['PublicIp']+"\033[32m in \033[0m"+region)
                if 'InstanceId' not in address:
                   instanceid = '-'
                else:
@@ -102,19 +99,5 @@ def main():
       list_ec2()
    elif args.service == 'eip':
       show_ip()
-   #elif args.service == 'ec2':
-   #   scrape_ec2(region, args.label)
-   #elif args.service == 'rds':
-   # scrape_rds(region, args.label)
-   #elif args.service == 's3':
-   # scrape_s3(region, args.label)
-   #elif args.service == 'all':
-   # scrape_ebs(region, args.label)
-   # scrape_ec(region, args.label)
-   # scrape_ec2(region, args.label)
-   # scrape_rds(region, args.label)
-   # scrape_s3(region, args.label)
-   #else:
-   # exit('Service to scrape not valid or not defined: "{0}".'.format(args.service))
 
 main()
