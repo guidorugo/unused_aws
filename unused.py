@@ -37,7 +37,7 @@ def list_ec2():
                 regions = [region['RegionName'] for region in boto3.client('ec2', region_name='us-west-1').describe_regions()['Regions']]
             else:
                 regions = args.region.split()
-            ec2_table = PrettyTable(['\033[33mN\033[0m', '\033[33mName\033[0m', '\033[33mInstance ID\033[0m', '\033[33mRegion\033[0m', '\033[33mInstance Type\033[0m', '\033[33mPublic IP\033[0m', '\033[33mState\033[0m', '\033[33mCPU Avg\033[0m', '\033[33mCPU Max\033[0m'])
+            ec2_table = PrettyTable(['\033[33mName\033[0m', '\033[33mInstance ID\033[0m', '\033[33mRegion\033[0m', '\033[33mInstance Type\033[0m', '\033[33mPublic IP\033[0m', '\033[33mState\033[0m', '\033[33mCPU Avg\033[0m', '\033[33mCPU Max\033[0m'])
             for region in regions:
                 instances = boto3.resource('ec2', region_name=region).instances.filter()
                 for instance in instances:
@@ -76,7 +76,7 @@ def list_ec2():
                         except IndexError:
                             cpu_avg = 'N/A'
                             cpu_max = 'N/A'
-                        ec2_table.add_row([count, name, instance.instance_id, region, instance.instance_type, instance.public_ip_address, state, cpu_avg, cpu_max])
+                        ec2_table.add_row([name, instance.instance_id, region, instance.instance_type, instance.public_ip_address, state, cpu_avg, cpu_max])
                         count += 1
         except botocore.exceptions.ClientError as ex:
             if ex.response['Error']['Code'] == 'UnauthorizedOperation':
@@ -86,7 +86,7 @@ def list_ec2():
                 pass
         if count > 0:
             print('\n\033[93mTables in \033[0m'+profile)
-            print ec2_table.get_string(sort_key=itemgetter(7,0), sortby='\033[33mN\033[0m')
+            print ec2_table.get_string(sortby='\033[33mName\033[0m')
         else:
             print('\nNo instances on '+profile)
 
