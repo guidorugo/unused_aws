@@ -24,6 +24,7 @@ def show_all():
     list_rds()
 
 def list_ec2():
+    name = None
     if args.profile:
         profiles = args.profile.split()
     else:
@@ -36,7 +37,7 @@ def list_ec2():
                 regions = [region['RegionName'] for region in boto3.client('ec2', region_name='us-west-1').describe_regions()['Regions']]
             else:
                 regions = args.region.split()
-            ec2_table = PrettyTable(['\033[33mName\033[0m', '\033[33mInstance ID\033[0m', '\033[33mRegion\033[0m', '\033[33mInstance Type\033[0m', '\033[33mPublic IP\033[0m', '\033[33mState\033[0m', '\033[33mCPU Avg\033[0m', '\033[33mCPU Max\033[0m'])
+            ec2_table = PrettyTable(['\033[33mN\033[0m', '\033[33mName\033[0m', '\033[33mInstance ID\033[0m', '\033[33mRegion\033[0m', '\033[33mInstance Type\033[0m', '\033[33mPublic IP\033[0m', '\033[33mState\033[0m', '\033[33mCPU Avg\033[0m', '\033[33mCPU Max\033[0m'])
             for region in regions:
                 instances = boto3.resource('ec2', region_name=region).instances.filter()
                 for instance in instances:
@@ -55,7 +56,7 @@ def list_ec2():
                             state = '\033[35mStopped\033[0m'
                         if instance.tags is not None:
                             for tag in instance.tags:                                                                     
-                                if 'Name' == tag['Key'] or 'name' == tag['Key']:
+                                if 'Name' is tag['Key'] or 'name' is tag['Key']:
                                     name = tag['Value']
                             if name is None:                       
                                 name = '-'  
@@ -75,7 +76,7 @@ def list_ec2():
                         except IndexError:
                             cpu_avg = 'N/A'
                             cpu_max = 'N/A'
-                        ec2_table.add_row([name, instance.instance_id, region, instance.instance_type, instance.public_ip_address, state, cpu_avg, cpu_max])
+                        ec2_table.add_row([count, name, instance.instance_id, region, instance.instance_type, instance.public_ip_address, state, cpu_avg, cpu_max])
                         count += 1
         except botocore.exceptions.ClientError as ex:
             if ex.response['Error']['Code'] == 'UnauthorizedOperation':
@@ -85,7 +86,7 @@ def list_ec2():
                 pass
         if count > 0:
             print('\n\033[93mTables in \033[0m'+profile)
-            print ec2_table.get_string(sortby='\033[33mState\033[0m')
+            print ec2_table.get_string(sort_key=itemgetter(7,0), sortby='\033[33mN\033[0m')
         else:
             print('\nNo instances on '+profile)
 
@@ -220,24 +221,24 @@ def list_rds():
                 try:
                     cpu_usage_datapoints = cpu_usage['Datapoints']
                     cpu_usage_last_datapoint = sorted(cpu_usage_datapoints, key=itemgetter('Timestamp'))[-1]
-                    cpu_usage_avg = round(cpu_usage_last_datapoint['Average'],2)
-                    cpu_usage_max = round(cpu_usage_last_datapoint['Maximum'],2)
+                    cpu_usage_avg = round(cpu_usage_last_datapoint['Average'], 2)
+                    cpu_usage_max = round(cpu_usage_last_datapoint['Maximum'], 2)
                 except IndexError:
                     cpu_usage_avg = "N/A"
                     cpu_usage_max = "N/A"
                 try:
                     mem_usage_datapoints = mem_usage['Datapoints']
                     mem_usage_last_datapoint = sorted(mem_usage_datapoints, key=itemgetter('Timestamp'))[-1]
-                    mem_usage_avg = round(mem_usage_last_datapoint['Average']/(1024*1024*1024),2)
-                    mem_usage_max = round(mem_usage_last_datapoint['Maximum']/(1024*1024*1024),2)
+                    mem_usage_avg = round(mem_usage_last_datapoint['Average']/(1024*1024*1024), 2)
+                    mem_usage_max = round(mem_usage_last_datapoint['Maximum']/(1024*1024*1024), 2)
                 except IndexError:
                     mem_usage_avg = 'N/A'
                     mem_usage_max = 'N/A'
                 try:
                     conn_count_datapoints = conn_count['Datapoints']
                     conn_count_last_datapoint = sorted(conn_count_datapoints, key=itemgetter('Timestamp'))[-1]
-                    conn_count_avg = round(conn_count_last_datapoint['Average'],2)
-                    conn_count_max = round(conn_count_last_datapoint['Maximum'],2)
+                    conn_count_avg = round(conn_count_last_datapoint['Average'], 2)
+                    conn_count_max = round(conn_count_last_datapoint['Maximum'], 2)
                 except IndexError:
                     conn_count_avg = 'N/A'
                     conn_count_max = 'N/A'
