@@ -24,7 +24,6 @@ def show_all():
     list_rds()
 
 def list_ec2():
-    name = None
     if args.profile:
         profiles = args.profile.split()
     else:
@@ -55,11 +54,10 @@ def list_ec2():
                         elif instance.state['Name'] == 'stopped':
                             state = '\033[35mStopped\033[0m'
                         if instance.tags is not None:
-                            for tag in instance.tags:                                                                     
-                                if 'Name' is tag['Key'] or 'name' is tag['Key']:
+                            name = '-'
+                            for tag in instance.tags:
+                                if ( 'Name' == tag['Key'] ) or ( 'name' == tag['Key'] ):
                                     name = tag['Value']
-                            if name is None:                       
-                                name = '-'  
                         cpu = boto3.client('cloudwatch', region_name=region).get_metric_statistics(
                             Namespace='AWS/EC2',
                             MetricName='CPUUtilization',
@@ -86,7 +84,7 @@ def list_ec2():
                 pass
         if count > 0:
             print('\n\033[93mTables in \033[0m'+profile)
-            print ec2_table.get_string(sortby='\033[33mName\033[0m')
+            print ec2_table.get_string(sortby='\033[33mState\033[0m')
         else:
             print('\nNo instances on '+profile)
 
