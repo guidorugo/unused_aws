@@ -24,6 +24,15 @@ def show_all():
     list_rds()
 
 def list_ec2():
+    column = {
+                'name' : '\033[33mName\033[0m', 
+                'id' : '\033[33mInstance ID\033[0m', 
+                'region' : '\033[33mRegion\033[0m', 
+                'type' : '\033[33mInstance Type\033[0m', 
+                'ip' : '\033[33mPublic IP\033[0m', 
+                'state' : '\033[33mState\033[0m', 
+                'cpu_avg' : '\033[33mCPU Avg\033[0m', 
+                'cpu_max' : '\033[33mCPU Max\033[0m' }
     if args.profile:
         profiles = args.profile.split()
     else:
@@ -36,7 +45,7 @@ def list_ec2():
                 regions = [region['RegionName'] for region in boto3.client('ec2', region_name='us-west-1').describe_regions()['Regions']]
             else:
                 regions = args.region.split()
-            ec2_table = PrettyTable(['\033[33mName\033[0m', '\033[33mInstance ID\033[0m', '\033[33mRegion\033[0m', '\033[33mInstance Type\033[0m', '\033[33mPublic IP\033[0m', '\033[33mState\033[0m', '\033[33mCPU Avg\033[0m', '\033[33mCPU Max\033[0m'])
+            ec2_table = PrettyTable([ column['name'], column['id'], column['region'], column['type'], column['ip'], column['state'], column['cpu_avg'], column['cpu_max'] ])
             for region in regions:
                 instances = boto3.resource('ec2', region_name=region).instances.filter()
                 for instance in instances:
@@ -74,7 +83,7 @@ def list_ec2():
                         except IndexError:
                             cpu_avg = 'N/A'
                             cpu_max = 'N/A'
-                        ec2_table.add_row([name, instance.instance_id, region, instance.instance_type, instance.public_ip_address, state, cpu_avg, cpu_max])
+                        ec2_table.add_row([ name, instance.instance_id, region, instance.instance_type, instance.public_ip_address, state, cpu_avg, cpu_max ])
                         count += 1
         except botocore.exceptions.ClientError as ex:
             if ex.response['Error']['Code'] == 'UnauthorizedOperation':
@@ -84,11 +93,16 @@ def list_ec2():
                 pass
         if count > 0:
             print('\n\033[93mTables in \033[0m'+profile)
-            print ec2_table.get_string(sortby='\033[33mState\033[0m')
+            print ec2_table.get_string(sortby= column['state'] )
         else:
             print('\nNo instances on '+profile)
 
 def show_ip():
+    column = {
+            'id' : '\033[33mInstance ID\033[0m', 
+            'region' : '\033[33mRegion\033[0m', 
+            'ip' : '\033[33mPublic IP\033[0m', 
+            'status' : '\033[33mStatus\033[0m' }
     if args.profile:
         profiles = args.profile.split()
     else:
@@ -100,7 +114,7 @@ def show_ip():
             regions = [region['RegionName'] for region in boto3.client('ec2', region_name='us-west-1').describe_regions()['Regions']]
         else:
             regions = args.region.split()
-        ips_table = PrettyTable(['\033[33mInstance ID\033[0m', '\033[33mPublic IP\033[0m', '\033[33mRegion\033[0m', '\033[33mStatus\033[0m'])
+        ips_table = PrettyTable([ column['id'], column['ip'], column['region'], column['status'] ])
         for region in regions:
             for address in boto3.client('ec2', region_name=region).describe_addresses()['Addresses']:
                 if 'NetworkInterfaceId' in address:
@@ -115,11 +129,16 @@ def show_ip():
                 count += 1
         if count > 0:
             print ('\n\033[93mTables in \033[0m'+profile)
-            print ips_table.get_string(sortby='\033[33mStatus\033[0m')
+            print ips_table.get_string(sortby= column['status'] )
         else:
             print('\nNo Elastic IPs on '+profile)
 
 def show_elb():
+    column = {
+            'name' : '\033[33mName\033[0m', 
+            'dns' : '\033[33mDNS\033[0m', 
+            'az' : '\033[33mAZs\033[0m', 
+            'instances' : '\033[33mInstances\033[0m' }
     if args.profile:
         profiles = args.profile.split()
     else:
@@ -131,7 +150,7 @@ def show_elb():
             regions = [region['RegionName'] for region in boto3.client('ec2', region_name='us-east-1').describe_regions()['Regions']]
         else:
             regions = args.region.split()
-        elb_table = PrettyTable(['\033[33mName\033[0m', '\033[33mDNS\033[0m', '\033[33mAZs\033[0m', '\033[33mInstances\033[0m'])
+        elb_table = PrettyTable([ column['name'], column['dns'], column['az'], column['instances'] ])
         for region in regions:
             for elbs in boto3.client('elb', region_name=region).describe_load_balancers()['LoadBalancerDescriptions']:
                 elb_table.add_row([elbs['LoadBalancerName'], elbs['DNSName'], region, len(elbs['Instances'])])
@@ -143,15 +162,18 @@ def show_elb():
             print('\nNo Elastic Load Balancer on '+profile)
 
 def list_s3():
+    column = {
+        'name' : '\033[33mName\033[0m', 
+        'size' : '\033[33mSize\033[0m', 
+        'creation' : '\033[33mCreation\033[0m' }
     if args.profile:
         profiles = args.profile.split()
     else:
         profiles = boto3.Session().available_profiles
     for profile in profiles:
         count = 0
-        #print ('\nProcessing profile '+profile)
         boto3.setup_default_session(profile_name=profile)
-        s3_table = PrettyTable(['\033[33mName\033[0m', '\033[33mSize (Gb)\033[0m', '\033[33mCreation\033[0m'])
+        s3_table = PrettyTable([ column['Name'], column['size'], column['creation'] ])
         for s3_bucket in boto3.client('s3').list_buckets()['Buckets']:
             s3_bucket_creation_date = s3_bucket['CreationDate'].isoformat()
             bucket_size = boto3.client('cloudwatch', region_name='us-east-1').get_metric_statistics(
@@ -168,16 +190,26 @@ def list_s3():
                 bucket_size_avg = round(bucket_size_last_datapoint['Average']/(1024*1024*1024), 2)
             except IndexError:
                 bucket_size_avg = "N/A"
-            #print bucket_size_avg, s3_bucket['Name']
-            s3_table.add_row([s3_bucket['Name'], bucket_size_avg, s3_bucket['CreationDate'].date()])
+            s3_table.add_row([ s3_bucket['Name'], bucket_size_avg, s3_bucket['CreationDate'].date() ])
             count += 1
         if count > 0:
             print('\n\033[93mBuckets in \033[0m'+profile)
-            print s3_table.get_string(sortby='\033[33mName\033[0m')
+            print s3_table.get_string( sortby= column['Name'] )
         else: 
             print('\nNo buckets on '+profile)
 
 def list_rds():
+    column = {
+        'name' : '\033[33mName\033[0m',
+        'region' : '\033[33mRegion\033[0m', 
+        'class' : '\033[33mClass\033[0m',
+        'engine' : '\033[33mEngine\033[0m',
+        'cpu_avg' : '\033[33mCPU Avg\033[0m', 
+        'cpu_max' : '\033[33mCPU Max\033[0m', 
+        'mem_avg' : '\033[33mFree Mem Avg\033[0m', 
+        'mem_max' : '\033[33mFree Mem Max\033[0m', 
+        'con_avg' : '\033[33mConnections Acg\033[0m', 
+        'con_max' : '\033[33mConnections Max\033[0m', }
     if args.profile:
         profiles = args.profile.split()
     else:
@@ -189,7 +221,7 @@ def list_rds():
             regions = [region['RegionName'] for region in boto3.client('ec2', region_name='us-east-1').describe_regions()['Regions']]
         else:
             regions = args.region.split()
-        rds_table = PrettyTable(['\033[33mName\033[0m', '\033[33mRegion\033[0m', '\033[33mClass\033[0m', '\033[33mEngine\033[0m', '\033[33mCPU Avg\033[0m', '\033[33mCPU Max\033[0m', '\033[33mFree Mem Avg\033[0m', '\033[33mFree Mem Max\033[0m', '\033[33mConections Avg\033[0m', '\033[33mConections Max\033[0m'])
+        rds_table = PrettyTable([ column['name'], column['region'], column['class'], column['engine'], column['cpu_avg'], column['cpu_max'], column['mem_avg'], column['mem_max'], column['con_avg'], column['con_max'] ])
         for region in regions:
             for rds_instance in boto3.client('rds', region_name=region).describe_db_instances()['DBInstances']:
                 cpu_usage = boto3.client('cloudwatch', region_name=region).get_metric_statistics(
@@ -257,10 +289,46 @@ def list_rds():
                 count += 1
         if count > 0:
             print('\n\033[93mRDS Instances in \033[0m'+profile)
-            print rds_table.get_string(sort_key=itemgetter(4,2), sortby='\033[33mName\033[0m')
+            print rds_table.get_string( sort_key=itemgetter(4,2), sortby= column['name'] )
         else: 
             print('\nNo Instances on '+profile)
             
+def list_ec(): #ElastiCache
+    column = {
+        'name' : '\033[33mCluster Name\033[0m', 
+        'region' : '\033[33mRegion\033[0m', 
+        'engine' : '\033[33mEngine\033[0m', 
+        'type' : '\033[33mType\033[0m',
+        'status' : '\033[33mStatus\033[0m',  
+        'nodes' : '\033[33mNodes\033[0m', 
+        'mem_avg' : '\033[33mFree Mem Avg\033[0m', 
+        'mem_max' : '\033[33mFree Mem Max\033[0m', 
+        'con_avg' : '\033[33mConnections Avg\033[0m', 
+        'con_max' : '\033[33mConnections Max\033[0m' }
+    if args.profile:
+            profiles = args.profile.split()
+    else:
+        profiles = boto3.Session().available_profiles
+    for profile in profiles:
+        count = 0
+        boto3.setup_default_session(profile_name=profile)
+        if not args.region:
+            regions = [region['RegionName'] for region in boto3.client('ec2', region_name='us-east-1').describe_regions()['Regions']]
+        else:
+            regions = args.region.split()
+        ec_table = PrettyTable([ column['name'], column['region'], column['engine'], column['type'], column['status'], column['nodes'], column['mem_avg'], column['mem_max'], column['con_avg'], column['con_max'] ])
+        for region in regions:
+            for ecs in boto3.client('elasticache', region_name='us-east-1').describe_cache_clusters()['CacheClusters']:
+                ec_table.add_row([ ecs['CacheClusterId'], region, ecs['Engine'], ecs['CacheNodeType'], ecs['CacheClusterStatus'], ecs['NumCacheNodes'], '1','1','1','1', ])
+                #print ecs['CacheClusterId']
+                #print ecs['Engine']
+                count += 1
+        if count > 0:
+            print('\n\033[93mRDS Instances in \033[0m'+profile)
+            print ec_table.get_string( sort_key=itemgetter(4,2), sortby= column['name'] )
+        else: 
+            print('\nNo Instances on '+profile)
+
 def main():
     if args.service == 'ec2':
         list_ec2()
@@ -272,6 +340,8 @@ def main():
         list_s3()
     elif args.service == 'rds':
         list_rds()
+    elif args.service == 'ec':
+        list_ec()
     elif not args.service:
         show_all() 
     else:
@@ -286,16 +356,6 @@ def test_con():
             profiles = args.profile.split()
         else:
             profiles = boto3.Session().available_profiles
-    except botocore.exceptions.ClientError as ex:
-        if ex.response['Error']['Code'] == 'ExpiredToken':
-            print('\033[31mToken seems expired.\033[0m')
-            sys.exit(1)
-        elif ex.response['Error']['Code'] == 'AccessDenied':
-            print('\nAccess denied')
-            sys.exit(1)
-        else:
-            print('Error unknown. Error : ' + ex.response['Error']['Code'])
-            sys.exit(1)
     except botocore.exceptions.NoRegionError:   
         print('\n\033[31mCould not find REGION or DEFAULT_REGION in OS environs.\nWill use "\033[0mus-west-1\033[31m" as default.\033[0m')
         os.environ['AWS_DEFAULT_REGION'] = 'us-west-1'
