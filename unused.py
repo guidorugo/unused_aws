@@ -319,7 +319,7 @@ def list_ec(): #ElastiCache
         ec_table = PrettyTable([ column['name'], column['region'], column['engine'], column['type'], column['status'], column['nodes'], column['mem_avg'], column['mem_max'], column['con_avg'], column['con_max'] ])
         for region in regions:
             for ecs in boto3.client('elasticache', region_name='us-east-1').describe_cache_clusters()['CacheClusters']:
-                ec_table.add_row([ ecs['CacheClusterId'], region, ecs['Engine'], ecs['CacheNodeType'], ecs['CacheClusterStatus'], ecs['NumCacheNodes'], '1','1','1','1', ])
+                ec_table.add_row([ ecs['CacheClusterId'], region, ecs['Engine'], ecs['CacheNodeType'], ecs['CacheClusterStatus'], ecs['NumCacheNodes'], 'x','x','x','x', ])
                 #print ecs['CacheClusterId']
                 #print ecs['Engine']
                 count += 1
